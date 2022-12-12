@@ -154,7 +154,7 @@ def lineareRegression(article):
     ax.add_line(line)
     print(ax)
     plt.show()
-    return intercept, slope
+    return intercept, slope, r_sq
 
 
 def berechneDaten(alpha, beta, entrys):
@@ -166,7 +166,22 @@ def berechneDaten(alpha, beta, entrys):
     return summe
 
 
-alphaMeisen, betaMeisen = lineareRegression("Meisen")
+def berechneSumme(alpha, beta, summe, scr):
+    i = 0
+    for entry in summe[0: len(summe)]:
+        summe[i] = (alpha + beta * entry) * (1 - scr)
+        i += 1
+    return summe
+
+
+def abweichungsfaktor(summe, mainview):
+    abw = [abs(m / s1) for s1, m in zip(summe, mainview)]
+    abw1 = (sum(abw)) / len(abw)
+    return abw1
+
+
+alphaMeisen, betaMeisen, score = lineareRegression("Meisen")
+alpha2, beta2, score2 = lineareRegression("Schmetterlinge")
 
 
 '''
@@ -181,22 +196,58 @@ alpha, beta = lineareRegression("Köln")
 alpha, beta = lineareRegression("Großer Panda")
 '''
 
-
 mainviews = pageviewget("Meisen")
 backlinksMainview = linksAnalysis.get_back_links("Meisen")
 first20entrys = backlinksMainview[0:20]
-s = berechneDaten(alphaMeisen, betaMeisen, first20entrys)
+summe1 = analyse("Meisen")
+su = berechneSumme(alphaMeisen, betaMeisen, summe1, score)
 
+x1 = np.linspace(2015, 2022.5, num=len(su))
+plt.plot(x1, su)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Meisen Regression")
+plt.show()
+
+x2 = np.linspace(2015, 2022.5, num=len(mainviews))
+plt.plot(x2, mainviews)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Meisen normal")
+plt.show()
+
+#######
+
+mainviews2 = pageviewget("Schmetterlinge")
+backlinksMainview2 = linksAnalysis.get_back_links("Schmetterlinge")
+first20entrys2 = backlinksMainview2[0:20]
+summe2 = analyse("Schmetterlinge")
+su2 = berechneSumme(alpha2, beta2, summe2, score2)
+
+x3 = np.linspace(2015, 2022.5, num=len(su2))
+plt.plot(x3, su2)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Schmetterlinge Regression")
+plt.show()
+
+x4 = np.linspace(2015, 2022.5, num=len(mainviews2))
+plt.plot(x4, mainviews2)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Schmetterlinge normal")
+plt.show()
+
+'''
 x1 = np.linspace(2015, 2022.5, num=len(s))
 x2 = np.linspace(2015, 2022.5, num=len(mainviews))
 plt.plot(x1, s)
 plt.plot(x2, mainviews)
 plt.xlabel("Time")
 plt.ylabel("Views")
-plt.title("Deutschland Regression")
+plt.title("Meisen Regression")
 plt.show()
 
-'''
 mainviews2 = pageviewget("Deutschland")
 backlinksMainview2 = linksAnalysis.get_back_links("Deutschland")
 first20entrys2 = backlinksMainview2[0:20]
