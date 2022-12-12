@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from matplotlib import lines as mlines
 
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
 import linksAnalysis
 from statsAnalysis import get_pageviews, analysis
@@ -57,7 +58,6 @@ def pageviewget(name):
     zero = 0
 
     firstyear = [int(data[0]["timestamp"][0:4])]
-    print(firstyear)
 
     for entry in data:
         article = entry['article']
@@ -99,7 +99,6 @@ def lineareRegression(article):
 
     for entry in first20entrys:
         views = pageviewget(entry)
-        print("länge", len(views))
         len2 = len(views)
         if len2 < len1:
             diff = len1 - len2
@@ -112,26 +111,39 @@ def lineareRegression(article):
     data2 = analysis(data)
 
     x = df
-    print(data2)
     y = mainviews
 
     model = LinearRegression()
     model.fit(x, y)
 
     x2 = np.linspace(2015, 2022.5, num=len(mainviews))
-    '''
-    intercept = model.intercept_[0]
-    slope = model.coef_[0, 0]
+
+    intercept = model.intercept_
+    slope = model.coef_[0]
     r_sq = model.score(x, y)
+
     print("intercept:", intercept)
     print("slope:", slope)
     print("coefficient of determination:", r_sq)
-    '''
 
     yhat = model.predict(x)
     yhat[yhat < 0] = 0
 
-    plt.scatter(mainviews, yhat)
+    x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                        test_size=0.3,
+                                                        random_state=None)
+    lr = LinearRegression()
+    lr.fit(x_train, y_train)
+
+    print('------ Lineare Regression -----')
+    print('Funktion via sklearn: y = %.3f * x + %.3f' % (lr.coef_[0], lr.intercept_))
+    print("Alpha: {}".format(lr.intercept_))
+    print("Beta: {}".format(lr.coef_[0]))
+    print("Training Set RÂ² Score: {:.2f}".format(lr.score(x_train, y_train)))
+    print("Test Set RÂ² Score: {:.2f}".format(lr.score(x_test, y_test)))
+    print("\n")
+
+    plt.scatter(mainviews, yhat, alpha=0.7)
     plt.title("Lineare Regression")
     plt.xlabel("Views Backlinks")
     plt.ylabel("Views: " + article)
@@ -140,23 +152,65 @@ def lineareRegression(article):
     transform = ax.transAxes
     line.set_transform(transform)
     ax.add_line(line)
+    print(ax)
     plt.show()
+    return intercept, slope
 
 
-lineareRegression("Meisen")
+def berechneDaten(alpha, beta, entrys):
+    summe = []
+    for entry in entrys[0:20]:
+        for views in range(0, len(entry)):
+            summe.append((alpha * views + beta))
 
-lineareRegression("Deutschland")
-
-lineareRegression("Lineare Optimierung")
-
-lineareRegression("Weihnachten")
-
-lineareRegression("Köln")
-
-lineareRegression("Großer Panda")
+    return summe
 
 
-''' 
+alphaMeisen, betaMeisen = lineareRegression("Meisen")
+
+
+'''
+alpha, beta = lineareRegression("Deutschland")
+
+alpha, beta = lineareRegression("Lineare Optimierung")
+
+alpha, beta = lineareRegression("Weihnachten")
+
+alpha, beta = lineareRegression("Köln")
+
+alpha, beta = lineareRegression("Großer Panda")
+'''
+
+
+mainviews = pageviewget("Meisen")
+backlinksMainview = linksAnalysis.get_back_links("Meisen")
+first20entrys = backlinksMainview[0:20]
+s = berechneDaten(alphaMeisen, betaMeisen, first20entrys)
+
+x1 = np.linspace(2015, 2022.5, num=len(s))
+x2 = np.linspace(2015, 2022.5, num=len(mainviews))
+plt.plot(x1, s)
+plt.plot(x2, mainviews)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Deutschland Regression")
+plt.show()
+
+'''
+mainviews2 = pageviewget("Deutschland")
+backlinksMainview2 = linksAnalysis.get_back_links("Deutschland")
+first20entrys2 = backlinksMainview2[0:20]
+s2 = berechneDaten(alphaDeutschland, betaDeutschland, first20entrys2)
+
+x1 = np.linspace(2015, 2022.5, num=len(s2))
+x2 = np.linspace(2015, 2022.5, num=len(mainviews2))
+plt.plot(x1, s2)
+plt.plot(x2, mainviews2)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Deutschland Regression")
+plt.show()
+
 viewsMeisen = pageviewget("Meisen")
 viewsKohlmeisen = pageviewget("Kohlmeise")
 viewsBlaumeisen = pageviewget("Blaumeise")
