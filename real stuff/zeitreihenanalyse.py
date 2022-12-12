@@ -1,4 +1,6 @@
 from datetime import datetime
+from statistics import mean
+
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -114,7 +116,7 @@ def lineareRegression(article):
     y = mainviews
 
     model = LinearRegression()
-    model.fit(x, y)
+    model.fit(x, y, 0.2)
 
     x2 = np.linspace(2015, 2022.5, num=len(mainviews))
 
@@ -166,23 +168,28 @@ def berechneDaten(alpha, beta, entrys):
     return summe
 
 
-def berechneSumme(alpha, beta, summe, scr):
+def berechneSumme(alpha, beta, summe, scr, abw):
     i = 0
+    print(max(summe))
+
     for entry in summe[0: len(summe)]:
+        if entry > 500 * abw:
+            entry = mean(summe)
+            print(entry)
+
         summe[i] = (alpha + beta * entry) * (1 - scr)
         i += 1
     return summe
 
 
 def abweichungsfaktor(summe, mainview):
-    abw = [abs(m / s1) for s1, m in zip(summe, mainview)]
+    abw = [abs(s1 - m) for s1, m in zip(summe, mainview)]
     abw1 = (sum(abw)) / len(abw)
     return abw1
 
 
 alphaMeisen, betaMeisen, score = lineareRegression("Meisen")
 alpha2, beta2, score2 = lineareRegression("Schmetterlinge")
-
 
 '''
 alpha, beta = lineareRegression("Deutschland")
@@ -200,7 +207,8 @@ mainviews = pageviewget("Meisen")
 backlinksMainview = linksAnalysis.get_back_links("Meisen")
 first20entrys = backlinksMainview[0:20]
 summe1 = analyse("Meisen")
-su = berechneSumme(alphaMeisen, betaMeisen, summe1, score)
+abw2 = abweichungsfaktor(summe1, mainviews)
+su = berechneSumme(alphaMeisen, betaMeisen, summe1, score, abw2)
 
 x1 = np.linspace(2015, 2022.5, num=len(su))
 plt.plot(x1, su)
@@ -222,7 +230,8 @@ mainviews2 = pageviewget("Schmetterlinge")
 backlinksMainview2 = linksAnalysis.get_back_links("Schmetterlinge")
 first20entrys2 = backlinksMainview2[0:20]
 summe2 = analyse("Schmetterlinge")
-su2 = berechneSumme(alpha2, beta2, summe2, score2)
+abw2 = abweichungsfaktor(summe1, mainviews)
+su2 = berechneSumme(alpha2, beta2, summe2, score2, abw2)
 
 x3 = np.linspace(2015, 2022.5, num=len(su2))
 plt.plot(x3, su2)
