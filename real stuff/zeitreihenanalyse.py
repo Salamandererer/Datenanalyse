@@ -1,14 +1,13 @@
 from datetime import datetime
+from itertools import zip_longest
 from statistics import mean
-
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import lines as mlines
-
+from pandas.core import frame
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-
 import linksAnalysis
 from statsAnalysis import get_pageviews, analysis
 
@@ -158,6 +157,40 @@ def lineareRegression(article):
     plt.show()
     return intercept, slope, r_sq
 
+def multLinRegression(article):
+    mainviews = pageviewget(article)
+    backlinksMainview = linksAnalysis.get_back_links(article)
+    first20entrys = backlinksMainview[0:20]
+    df = pd.DataFrame()
+    len1 = len(mainviews)
+
+    for entry in first20entrys:
+        views = pageviewget(entry)
+        len2 = len(views)
+        if len2 < len1:
+            diff = len1 - len2
+            for i in range(0, diff):
+                views.append(0)
+
+        df.insert(loc=0, column=entry, value=views)
+
+    data = get_pageviews(article, datetime(2015, 1, 1), datetime.today(), project="de.wikipedia.org")
+    data2 = analysis(data)
+
+    x = df
+    y = mainviews
+
+    model = LinearRegression()
+    model.fit(x, y)
+
+    intercept = model.intercept_
+    slope = model.coef_
+
+    print(len(slope))
+    return intercept, slope
+
+
+
 
 def berechneDaten(alpha, beta, entrys):
     summe = []
@@ -178,6 +211,27 @@ def berechneSumme(alpha, beta, summe, scr, abw):
             print(entry)
 
         summe[i] = (alpha + beta * entry) * (1 - scr)
+
+        i += 1
+    return summe
+
+def berechneSumme2(alpha, beta, backlinks):
+    i = 0
+    print(max(backlinks))
+    print(len(backlinks))
+    summe = []
+
+    for entry in backlinks[0: len(backlinks)]:
+        views = pageviewget(entry)
+        j = 0
+
+        for entry2 in views[0: len(views)]:
+            print("BETAAAAA", beta[i])
+            print("KEYYYYYYYYYYYY", views)
+            entry2[j] = (alpha + beta[i] * entry2[j])
+            j += 1
+
+        summe = [(km + bm) for km, bm in zip_longest(summe, views)]
         i += 1
     return summe
 
@@ -190,6 +244,24 @@ def abweichungsfaktor(summe, mainview):
 
 alphaMeisen, betaMeisen, score = lineareRegression("Meisen")
 alpha2, beta2, score2 = lineareRegression("Schmetterlinge")
+
+a, b = multLinRegression("Meisen")
+
+def smape(target, forecast):
+    if type(target) == pd.core.frame.DataFrame:
+        target = target.values
+
+    denominator = np.abs(target) + np.abs(forecast)
+    flag = denominator == 0.
+
+    smape = 2 * (
+        (np.abs(target - forecast) * (1 - flag)) / (denominator + flag)
+    )
+    return smape
+def MAPE(target ,predicted):
+    def mape(actual, pred):
+        actual, pred = np.array(actual), np.array(pred)
+        return (np.abs((actual - pred) / actual)) * 100
 
 '''
 alpha, beta = lineareRegression("Deutschland")
@@ -212,6 +284,8 @@ su = berechneSumme(alphaMeisen, betaMeisen, summe1, score, abw2)
 
 x1 = np.linspace(2015, 2022.5, num=len(su))
 plt.plot(x1, su)
+print("AAAAAAAAAAAAAAAAAAAAAA",len(su))
+print("BBBBBBBBBBBBBBBBB", len(mainviews))
 plt.xlabel("Time")
 plt.ylabel("Views")
 plt.title("Meisen Regression")
@@ -222,6 +296,29 @@ plt.plot(x2, mainviews)
 plt.xlabel("Time")
 plt.ylabel("Views")
 plt.title("Meisen normal")
+plt.show()
+
+##############
+
+mainviews4 = pageviewget("Meisen")
+backlinksMainview4 = linksAnalysis.get_back_links("Meisen")
+first20entrys4 = backlinksMainview4[0:20]
+summe4 = analyse("Meisen")
+abw4 = abweichungsfaktor(summe4, mainviews)
+su4 = berechneSumme2(a, b, first20entrys4)
+
+x1 = np.linspace(2015, 2022.5, num=len(su))
+plt.plot(x1, su4)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Meisen Regression HILFE")
+plt.show()
+
+x2 = np.linspace(2015, 2022.5, num=len(mainviews))
+plt.plot(x2, mainviews4)
+plt.xlabel("Time")
+plt.ylabel("Views")
+plt.title("Meisen normal HILFE")
 plt.show()
 
 #######
@@ -247,6 +344,15 @@ plt.ylabel("Views")
 plt.title("Schmetterlinge normal")
 plt.show()
 
+su.append(0)
+su = pd.DataFrame(su,columns=['predicted'])
+mw = pd.DataFrame(mainviews,columns=['views'])
+print("type su",su)
+print("type mv",mw)
+sm = smape(mw,su)
+print("mape ier", MAPE(mw['views'],su['predicted']))
+sm['mape'] = MAPE(mw['views'],su['predicted'])
+print("smape hier lol", sm.mean())
 '''
 x1 = np.linspace(2015, 2022.5, num=len(s))
 x2 = np.linspace(2015, 2022.5, num=len(mainviews))
