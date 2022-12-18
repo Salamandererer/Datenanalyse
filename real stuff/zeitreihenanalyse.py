@@ -8,61 +8,40 @@ from matplotlib import lines as mlines
 from pandas.core import frame
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-import linksAnalysis
-from statsAnalysis import get_pageviews, analysis
+from linkmethods import get_pageviews, get_back_links
+from testplots import analysis
 
 
 def analyse(mainpage):
     mainviews = pageviewget(mainpage)
-    backlinksMainview = linksAnalysis.get_back_links(mainpage)
-    first20entrys = backlinksMainview[0:20]
+    backlinksMainview = get_back_links(mainpage)
     summe = []
 
     for entry in mainviews:
         summe.append(0)
 
-    for entry in first20entrys:
+    for entry in backlinksMainview:
         views = pageviewget(entry)
         differenceViews = [abs(m - km) for m, km in zip(mainviews, views)]
         newDifference = difference(mainviews, views, differenceViews)
         i = 1.00
 
-        # diff = [abs(s - m) for s, m in zip(mainviews, views)]
+        diff = [abs(s - m) for s, m in zip(mainviews, views)]
         summe = [(km + bm) for km, bm in zip(summe, newDifference)]
-
-        '''
-        summe2 = summe
-
-        while (sum(diff) / len(diff)) > 100:
-            summe2 = [(i * km + i * bm) for km, bm in zip_longest(summe2, newDifference)]
-            diff = [abs(s - m) for s, m in zip_longest(mainviews, summe2)]
-            i = i - 0.01
-
-        print("hahahahah")
-        summe = summe2
-        '''
 
     return summe
 
 
-def pageviewget(name):
-    syear = 2015
-    start = datetime(syear, 1, 1)
-    end = datetime.today()
-    article = name
-
-    data = get_pageviews(article, start, end, project="de.wikipedia.org")
-
+def pageviewget(article):
     views = []
-    timestamp = []
-    year = []
-    zero = 0
+    data = []
 
-    firstyear = [int(data[0]["timestamp"][0:4])]
+    try:
+        data = get_pageviews(article, project="de.wikipedia.org")
+    except:
+        pass
 
     for entry in data:
-        article = entry['article']
-        timestamp.append((entry['timestamp']))
         views.append((entry['views']))
 
     return views
@@ -93,22 +72,22 @@ plt.show()
 
 def lineareRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = linksAnalysis.get_back_links(article)
-    first20entrys = backlinksMainview[0:20]
+    backlinksMainview = get_back_links(article)
     df = pd.DataFrame()
+    df2 = pd.DataFrame()
     len1 = len(mainviews)
 
-    for entry in first20entrys:
-        views = pageviewget(entry)
+    for entry in backlinksMainview:  # for every backlink from the mainpage
+        views = pageviewget(entry)  # get the views
         len2 = len(views)
-        if len2 < len1:
+        if len2 < len1:  # then compare if they have the same amount of entries
             diff = len1 - len2
             for i in range(0, diff):
                 views.append(0)
 
         df.insert(loc=0, column=entry, value=views)
 
-    data = get_pageviews(article, datetime(2015, 1, 1), datetime.today(), project="de.wikipedia.org")
+    data = get_pageviews(article, project="de.wikipedia.org")
     data2 = analysis(data)
 
     x = df
@@ -153,10 +132,18 @@ def lineareRegression(article):
     transform = ax.transAxes
     line.set_transform(transform)
     ax.add_line(line)
-    print(ax)
     plt.show()
 
     x1 = np.linspace(2015, 2022.5, num=len(yhat))
+
+    # relativer fehler
+    differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
+    plt.plot(x1, differenceViews)
+    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.ylabel("Average Error")
+    print("Kommutativen relativ fehler", np.mean(differenceViews))
+    plt.show()
+
     plt.plot(x1, yhat)
     print("AAAAAAAAAAAAAAAAAAAAAA", len(yhat))
     print("BBBBBBBBBBBBBBBBB", len(mainviews))
@@ -165,16 +152,22 @@ def lineareRegression(article):
     plt.title("Meisen Regression YHAT")
     plt.show()
 
+    plt.boxplot(differenceViews)
+    plt.ylabel("Average Error")
+    plt.xlabel("Meisen")
+    plt.show()
+
     return intercept, slope, r_sq
 
 
-lineareRegression("Meisen")
+if __name__ == '__main__':
+    lineareRegression("Meisen")
 
 
 def multLinRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = linksAnalysis.get_back_links(article)
-    first20entrys = backlinksMainview[0:20]
+    backlinksMainview = get_back_links(article)
+    first20entrys = backlinksMainview
     df = pd.DataFrame()
     len1 = len(mainviews)
 
@@ -188,7 +181,7 @@ def multLinRegression(article):
 
         df.insert(loc=0, column=entry, value=views)
 
-    data = get_pageviews(article, datetime(2015, 1, 1), datetime.today(), project="de.wikipedia.org")
+    data = get_pageviews(article, project="de.wikipedia.org")
     data2 = analysis(data)
 
     x = df
@@ -200,7 +193,7 @@ def multLinRegression(article):
     intercept = model.intercept_
     slope = model.coef_
 
-    print(len(slope))
+    print("lenSlope", len(slope))
     return intercept, slope
 
 
@@ -218,7 +211,7 @@ def berechneSumme(alpha, beta, summe, scr, abw):
     print(max(summe))
 
     for entry in summe[0: len(summe)]:
-        if entry > 500 * abw:
+        if entry > 250 * abw:
             entry = mean(summe)
             print(entry)
 
@@ -230,8 +223,8 @@ def berechneSumme(alpha, beta, summe, scr, abw):
 
 def berechneSumme2(alpha, beta, backlinks):
     i = 0
-    print(max(backlinks))
-    print(len(backlinks))
+    print("Maxbacklinks", max(backlinks))
+    print("lenofbacklinks", len(backlinks))
     initViews = pageviewget(backlinks[0])
 
     summe = []
@@ -267,12 +260,6 @@ def abweichungsfaktor(summe, mainview):
     abw = [abs(s1 - m) for s1, m in zip(summe, mainview)]
     abw1 = (sum(abw)) / len(abw)
     return abw1
-
-
-alphaMeisen, betaMeisen, score = lineareRegression("Meisen")
-alpha2, beta2, score2 = lineareRegression("Schmetterlinge")
-
-a, b = multLinRegression("Meisen")
 
 
 def smape(target, forecast):
