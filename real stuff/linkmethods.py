@@ -1,3 +1,5 @@
+import pandas as pd
+import psutil
 import requests
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -5,6 +7,7 @@ from urllib import parse
 from bs4 import BeautifulSoup
 from collections import Counter
 import numpy as np
+import os
 
 URL = "https://wikimedia.org/api/rest_v1/"
 HEADERS = {"Accept": "application/json", "user-agent": "marvin.braun1@smail.inf.h-brs.de"}
@@ -39,7 +42,13 @@ def get_pageviews(article: str,
         end.strftime("%Y%m%d")
     ]
     url = URL + "/".join(params)
-    return requests.get(url, headers=HEADERS).json()["items"]
+    results = []
+    try:
+        results = requests.get(url, headers=HEADERS).json()["items"]
+        return results
+    except:
+        pass
+
 
 def get_views(article: str):
     data = get_pageviews(article, project="de.wikipedia.org")
@@ -106,6 +115,8 @@ def count_links(article: str):
     for item in foundUrls:
         links.append("%s: %d" % (item[0], item[1]))
     return links
+
+
 ############################################################################################################
 if __name__ == '__main__':
 
@@ -133,8 +144,36 @@ if __name__ == '__main__':
     dataM = get_forward_links("Meisen")
     dataB = get_back_links("Meisen")
     print("joo bin da")
+    print(len(dataB))
+    new2 = [k for k in dataB if not 'Benutzer' in k]
+    print(len(new2))
+    print(new2)
+    new3 = [k for k in new2 if not 'Diskussion' in k]
+    new4 = [k for k in new3 if not 'Wikipedia' in k]
+    new5 = [k for k in new4 if not '/' in k]
 
-#Can remove unusefull links via:
-#ataB.remove("Magdeburger Straßen/M")
-#dataB.remove("Benutzer Diskussion:Nina/Archiv2")
-#dataB.remove("Benutzer:Atamari/Liste der Vögel in Gambia")
+    path = "datafiles/Meisen"
+    print(path)
+
+    for entry in new5:
+        df = pd.DataFrame(get_pageviews(entry))
+        df.to_csv(path + '/' f'{entry}' + '.csv', index=False)
+        print(df)
+
+    '''
+    filterdf = pd.DataFrame(dataB)
+    filterdf.columns = ["Backlinks"]
+    filterdf2 = filterdf[filterdf["Backlinks"].str.contains("Benutzer")]
+    filterdf3 = filterdf[filterdf["Backlinks"].str.contains("Diskussion")]
+    print(filterdf2)
+    print(filterdf3)
+    print("b4",len(filterdf))
+    print(filterdf)
+    print("after", len(filterdf))
+    print(len(filterdf)-len(filterdf2))
+    '''
+
+# Can remove unusefull links via:
+# dataB.remove("Magdeburger Straßen/M")
+# dataB.remove("Benutzer Diskussion:Nina/Archiv2")
+# dataB.remove("Benutzer:Atamari/Liste der Vögel in Gambia")
