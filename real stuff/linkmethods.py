@@ -1,3 +1,5 @@
+import glob
+
 import pandas as pd
 import psutil
 import requests
@@ -116,6 +118,26 @@ def count_links(article: str):
         links.append("%s: %d" % (item[0], item[1]))
     return links
 
+def get_target(target:str):
+    path = r'c:\Users\Marvin\PycharmProjects\pythonProject/real stuff/datafiles/' + target + '/' + target + '.csv'
+    data = pd.read_csv(path)
+    df_meisen = pd.DataFrame(data)[["timestamp","views"]]
+    df_meisen["timestamp"] = pd.to_numeric(df_meisen["timestamp"])
+    df_meisen = df_meisen.set_index("timestamp")
+    return df_meisen
+
+def get_backlink_views(target, ref_df):
+    path = r'c:\Users\Marvin\PycharmProjects\pythonProject/real stuff/datafiles/' + target + '/backlinksdata'
+    csv_files = glob.glob(os.path.join(path, "*.csv"))
+    flatten_views = []
+
+    for f in csv_files:
+        df = pd.read_csv(f)
+        df = df[["timestamp","views"]].set_index("timestamp").reindex_like(ref_df).fillna(0)
+
+        views = df.views.to_numpy()
+        flatten_views.append(views)
+    return flatten_views
 
 ############################################################################################################
 if __name__ == '__main__':
@@ -146,21 +168,27 @@ if __name__ == '__main__':
     print("joo bin da")
     print(len(dataB))
     new2 = [k for k in dataB if not 'Benutzer' in k]
-    print(len(new2))
-    print(new2)
     new3 = [k for k in new2 if not 'Diskussion' in k]
     new4 = [k for k in new3 if not 'Wikipedia' in k]
     new5 = [k for k in new4 if not '/' in k]
 
-    path = "datafiles/Meisen"
+    path = "datafiles/Meisen/backlinksdata"
     print(path)
-
-    for entry in new5:
-        df = pd.DataFrame(get_pageviews(entry))
-        df.to_csv(path + '/' f'{entry}' + '.csv', index=False)
-        print(df)
+    path2 = "datafiles/Meisen"
+    maindf = pd.DataFrame(get_pageviews("Meisen"))
+    maindf.to_csv(path2 + '/' "Meisen" + '.csv',index=False)
 
     '''
+    #Getting all the Filtered Backlinks and then Writing them to an CSV for easier access
+    for entry in new5:
+        df = pd.DataFrame(get_pageviews(entry))
+        if len(df) < 500:
+            pass
+        else:
+            df.to_csv(path + '/' f'{entry}' + '.csv', index=False)
+            print(df)
+
+    
     filterdf = pd.DataFrame(dataB)
     filterdf.columns = ["Backlinks"]
     filterdf2 = filterdf[filterdf["Backlinks"].str.contains("Benutzer")]
