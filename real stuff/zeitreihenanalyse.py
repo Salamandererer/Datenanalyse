@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib import lines as mlines
 from pandas.core import frame
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from linkmethods import get_pageviews, get_back_links
 from testplots import analysis
@@ -55,15 +56,15 @@ def difference(views, views2, diffViews2):
     return views2
 
 
-
 def lineareRegression(article):
     mainviews = pageviewget(article)
     backlinksMainview = get_back_links(article)
+    first20 = backlinksMainview[0:20]
     df = pd.DataFrame()
     df2 = pd.DataFrame()
     len1 = len(mainviews)
 
-    for entry in backlinksMainview:  # for every backlink from the mainpage
+    for entry in first20:  # for every backlink from the mainpage
         views = pageviewget(entry)  # get the views
         len2 = len(views)
         if len2 < len1:  # then compare if they have the same amount of entries
@@ -139,6 +140,7 @@ def lineareRegression(article):
     plt.show()
 
     plt.boxplot(differenceViews)
+    plt.title("Lin Regression")
     plt.ylabel("Average Error")
     plt.xlabel("Meisen")
     plt.show()
@@ -146,23 +148,22 @@ def lineareRegression(article):
     return intercept, slope, r_sq
 
 
-lineareRegression("Meisen")
-
 if __name__ == '__main__':
     lineareRegression("Meisen")
 
 
-def multLinRegression(article):
+def logLineareRegression(article):
     mainviews = pageviewget(article)
     backlinksMainview = get_back_links(article)
-    first20entrys = backlinksMainview
+    first20 = backlinksMainview[0:20]
     df = pd.DataFrame()
+    df2 = pd.DataFrame()
     len1 = len(mainviews)
 
-    for entry in first20entrys:
-        views = pageviewget(entry)
+    for entry in first20:  # for every backlink from the mainpage
+        views = pageviewget(entry)  # get the views
         len2 = len(views)
-        if len2 < len1:
+        if len2 < len1:  # then compare if they have the same amount of entries
             diff = len1 - len2
             for i in range(0, diff):
                 views.append(0)
@@ -175,14 +176,64 @@ def multLinRegression(article):
     x = df
     y = mainviews
 
-    model = LinearRegression()
-    model.fit(x, y)
+    model = LogisticRegression()
+    model.fit(x, y, 0.2)
+
+    x2 = np.linspace(2015, 2022.5, num=len(mainviews))
 
     intercept = model.intercept_
     slope = model.coef_
+    r_sq = model.score(x, y)
 
-    print("lenSlope", len(slope))
-    return intercept, slope
+    print("intercept:", intercept)
+    print("slope:", slope)
+    print("coefficient of determination:", r_sq)
+
+    yhat = model.predict(x)
+    yhat[yhat < 0] = 0
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                        test_size=0.3,
+                                                        random_state=None)
+
+    plt.scatter(mainviews, yhat, alpha=0.7)
+    plt.title("Logarithmisch Lineare Regression")
+    plt.xlabel("Views Backlinks")
+    plt.ylabel("Views: " + article)
+    ax = plt.gca()
+    line = mlines.Line2D([0, 1], [0, 1], color="red")
+    transform = ax.transAxes
+    line.set_transform(transform)
+    ax.add_line(line)
+    plt.show()
+
+    x1 = np.linspace(2015, 2022.5, num=len(yhat))
+
+    plt.plot(x1, yhat)
+    plt.xlabel("Time")
+    plt.ylabel("Views")
+    plt.title("Meisen Logarithmisch Lineare Regression YHAT")
+    plt.show()
+
+    # relativer fehler
+    differenceViews = np.mean(model)
+    print(differenceViews,"MEAAAAAAAAAAANW")
+    plt.plot(x1, differenceViews)
+    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.ylabel("Average Error")
+    print("Kommutativen relativ fehler", np.mean(differenceViews))
+    plt.show()
+
+    plt.boxplot(differenceViews)
+    plt.title("Log Regression")
+    plt.title("Log Regression")
+    plt.ylabel("Average Error")
+    plt.xlabel("Meisen")
+    plt.show()
+
+
+lineareRegression("Meisen")
+logLineareRegression("Meisen")
 
 
 def berechneDaten(alpha, beta, entrys):
@@ -267,4 +318,3 @@ def MAPE(target, predicted):
     def mape(actual, pred):
         actual, pred = np.array(actual), np.array(pred)
         return (np.abs((actual - pred) / actual)) * 100
-
