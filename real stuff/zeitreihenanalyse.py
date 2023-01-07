@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import lines as mlines
+from numpy import append, exp
 from pandas.core import frame
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -217,7 +218,7 @@ def logLineareRegression(article):
 
     # relativer fehler
     differenceViews = np.mean(model)
-    print(differenceViews,"MEAAAAAAAAAAANW")
+    print(differenceViews, "MEAAAAAAAAAAANW")
     plt.plot(x1, differenceViews)
     plt.xlabel("Difference Meisen to all Backlinks")
     plt.ylabel("Average Error")
@@ -232,8 +233,101 @@ def logLineareRegression(article):
     plt.show()
 
 
-lineareRegression("Meisen")
-logLineareRegression("Meisen")
+def exponentielleRegression(article):
+    mainviews = pageviewget(article)
+    backlinksMainview = get_back_links(article)
+    first20 = backlinksMainview[0:20]
+    df = pd.DataFrame()
+    df2 = pd.DataFrame()
+    len1 = len(mainviews)
+    print(len(mainviews))
+
+    for entry in first20:  # for every backlink from the mainpage
+        views = pageviewget(entry)  # get the views
+        len2 = len(views)
+        print(len(views))
+        insert = []
+
+        if len2 < len1:  # then compare if they have the same amount of entries
+            diff = len1 - len2
+            print(diff)
+            for i in range(0, diff):
+                views.append(0)
+
+        for e in views:
+            if e != 0:
+                insert.append(np.log(e))
+            if e == 0:
+                insert.append(0)
+
+        df.insert(loc=0, column=entry, value=insert)
+
+    data = get_pageviews(article, project="de.wikipedia.org")
+    data2 = analysis(data)
+
+    x = df
+    y = mainviews
+
+    model = LogisticRegression()
+    model.fit(x, y)
+
+    x2 = np.linspace(2015, 2022.5, num=len(mainviews))
+
+    intercept = model.intercept_
+    slope = model.coef_
+    r_sq = model.score(x, y)
+
+    print("intercept:", intercept)
+    print("slope:", slope)
+    print("coefficient of determination:", r_sq)
+
+    yhat = model.predict(x)
+    yhat[yhat < 0] = 0
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                        test_size=0.3,
+                                                        random_state=None)
+
+    plt.scatter(mainviews, yhat, alpha=0.7)
+    plt.title("Logarithmisch Lineare Regression")
+    plt.xlabel("Views Backlinks")
+    plt.ylabel("Views: " + article)
+    ax = plt.gca()
+    line = mlines.Line2D([0, 1], [0, 1], color="red")
+    transform = ax.transAxes
+    line.set_transform(transform)
+    ax.add_line(line)
+    plt.show()
+
+    x1 = np.linspace(2015, 2022.5, num=len(yhat))
+
+    plt.plot(x1, yhat)
+    plt.xlabel("Time")
+    plt.ylabel("Views")
+    plt.title("Meisen exponentielle Regression YHAT")
+    plt.show()
+
+    # relativer fehler
+    differenceViews = np.mean(model)
+    print(differenceViews, "MEAAAAAAAAAAANW")
+    plt.plot(x1, differenceViews)
+    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.ylabel("Average Error")
+    print("Kommutativen relativ fehler", np.mean(differenceViews))
+    plt.show()
+
+    plt.boxplot(differenceViews)
+    plt.title("exponentielle Regression")
+    plt.title("exponentielle Regression")
+    plt.ylabel("Average Error")
+    plt.xlabel("Meisen")
+    plt.show()
+
+
+# lineareRegression("Meisen")
+# logLineareRegression("Meisen")
+
+exponentielleRegression("Meisen")
 
 
 def berechneDaten(alpha, beta, entrys):
