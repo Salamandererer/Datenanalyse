@@ -40,11 +40,10 @@ def pageviewget(article):
 
     try:
         data = get_pageviews(article, project="de.wikipedia.org")
+        for entry in data:
+            views.append((entry['views']))
     except:
         pass
-
-    for entry in data:
-        views.append((entry['views']))
 
     return views
 
@@ -65,7 +64,7 @@ def lineareRegression(article):
     df2 = pd.DataFrame()
     len1 = len(mainviews)
 
-    for entry in first20:  # for every backlink from the mainpage
+    for entry in backlinksMainview:  # for every backlink from the mainpage
         views = pageviewget(entry)  # get the views
         len2 = len(views)
         if len2 < len1:  # then compare if they have the same amount of entries
@@ -217,7 +216,7 @@ def logLineareRegression(article):
     plt.show()
 
     # relativer fehler
-    differenceViews = np.mean(model)
+    differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
     print(differenceViews, "MEAAAAAAAAAAANW")
     plt.plot(x1, differenceViews)
     plt.xlabel("Difference Meisen to all Backlinks")
@@ -242,7 +241,7 @@ def exponentielleRegression(article):
     len1 = len(mainviews)
     print(len(mainviews))
 
-    for entry in first20:  # for every backlink from the mainpage
+    for entry in backlinksMainview:  # for every backlink from the mainpage
         views = pageviewget(entry)  # get the views
         len2 = len(views)
         print(len(views))
@@ -268,7 +267,7 @@ def exponentielleRegression(article):
     x = df
     y = mainviews
 
-    model = LogisticRegression()
+    model = LinearRegression()
     model.fit(x, y)
 
     x2 = np.linspace(2015, 2022.5, num=len(mainviews))
@@ -289,7 +288,7 @@ def exponentielleRegression(article):
                                                         random_state=None)
 
     plt.scatter(mainviews, yhat, alpha=0.7)
-    plt.title("Logarithmisch Lineare Regression")
+    plt.title("exponentielle Regression")
     plt.xlabel("Views Backlinks")
     plt.ylabel("Views: " + article)
     ax = plt.gca()
@@ -307,8 +306,10 @@ def exponentielleRegression(article):
     plt.title("Meisen exponentielle Regression YHAT")
     plt.show()
 
+    diff = exp(yhat)
+
     # relativer fehler
-    differenceViews = np.mean(model)
+    differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
     print(differenceViews, "MEAAAAAAAAAAANW")
     plt.plot(x1, differenceViews)
     plt.xlabel("Difference Meisen to all Backlinks")
@@ -325,7 +326,8 @@ def exponentielleRegression(article):
 
 
 # lineareRegression("Meisen")
-# logLineareRegression("Meisen")
+
+#logLineareRegression("Meisen")
 
 exponentielleRegression("Meisen")
 
