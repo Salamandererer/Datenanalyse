@@ -126,30 +126,25 @@ def lineareRegression(article):
     # relativer fehler
     differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
     plt.plot(x1, differenceViews)
-    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.xlabel("Difference " + article + " to all Backlinks")
     plt.ylabel("Average Error")
-    print("Kommutativen relativ fehler", np.mean(differenceViews))
     plt.show()
 
     plt.plot(x1, yhat)
-    print("AAAAAAAAAAAAAAAAAAAAAA", len(yhat))
-    print("BBBBBBBBBBBBBBBBB", len(mainviews))
     plt.xlabel("Time")
     plt.ylabel("Views")
-    plt.title("Meisen Regression YHAT")
+    plt.title(article + " Lineare Regression")
     plt.show()
 
     plt.boxplot(differenceViews)
     plt.title("Lin Regression")
     plt.ylabel("Average Error")
-    plt.xlabel("Meisen")
+    plt.xlabel(article)
     plt.show()
 
+    print("SMAPE Lin Regression: ", smape(mainviews, yhat))
+
     return intercept, slope, r_sq
-
-
-if __name__ == '__main__':
-    lineareRegression("Meisen")
 
 
 def logLineareRegression(article):
@@ -212,24 +207,24 @@ def logLineareRegression(article):
     plt.plot(x1, yhat)
     plt.xlabel("Time")
     plt.ylabel("Views")
-    plt.title("Meisen Logarithmisch Lineare Regression YHAT")
+    plt.title(article + " Logarithmisch Lineare Regression")
     plt.show()
 
     # relativer fehler
     differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
-    print(differenceViews, "MEAAAAAAAAAAANW")
     plt.plot(x1, differenceViews)
-    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.xlabel("Difference " + article + " to all Backlinks")
     plt.ylabel("Average Error")
-    print("Kommutativen relativ fehler", np.mean(differenceViews))
     plt.show()
 
-    plt.boxplot(differenceViews)
+    plt.boxplot(smape(mainviews, yhat))
     plt.title("Log Regression")
     plt.title("Log Regression")
     plt.ylabel("Average Error")
-    plt.xlabel("Meisen")
+    plt.xlabel(article)
     plt.show()
+
+    print("SMAPE Log-Lin Regression: ", smape(mainviews, yhat))
 
 
 def exponentielleRegression(article):
@@ -325,13 +320,6 @@ def exponentielleRegression(article):
     plt.show()
 
 
-# lineareRegression("Meisen")
-
-#logLineareRegression("Meisen")
-
-exponentielleRegression("Meisen")
-
-
 def berechneDaten(alpha, beta, entrys):
     summe = []
     for entry in entrys[0:20]:
@@ -414,3 +402,11 @@ def MAPE(target, predicted):
     def mape(actual, pred):
         actual, pred = np.array(actual), np.array(pred)
         return (np.abs((actual - pred) / actual)) * 100
+
+
+if __name__ == '__main__':
+    lineareRegression("Portal:Wikipedia nach Themen")
+
+    logLineareRegression("Portal:Wikipedia nach Themen")
+
+    # exponentielleRegression("Meisen")
