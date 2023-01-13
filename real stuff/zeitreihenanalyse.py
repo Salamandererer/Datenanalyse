@@ -8,13 +8,13 @@ from matplotlib import lines as mlines
 from pandas.core import frame
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from linkmethods import get_pageviews, get_links
+from linkmethods import get_pageviews, get_back_links
 from testplots import analysis
 
 
 def analyse(mainpage):
     mainviews = pageviewget(mainpage)
-    backlinksMainview = get_links(mainpage,"linkshere")
+    backlinksMainview = get_back_links(mainpage)
     summe = []
 
     for entry in mainviews:
@@ -38,10 +38,11 @@ def pageviewget(article):
 
     try:
         data = get_pageviews(article, project="de.wikipedia.org")
-        for entry in data:
-            views.append((entry['views']))
     except:
         pass
+
+    for entry in data:
+        views.append((entry['views']))
 
     return views
 
@@ -54,24 +55,9 @@ def difference(views, views2, diffViews2):
     return views2
 
 
-'''
-summe = analyse("Meisen")
-mainviews = pageviewget("Meisen")
-
-x1 = np.linspace(2015, 2022.5, num=len(summe))
-x2 = np.linspace(2015, 2022.5, num=len(mainviews))
-plt.plot(x1, summe)
-plt.plot(x2, mainviews)
-plt.xlabel("Time")
-plt.ylabel("Views")
-plt.title("hilfe")
-plt.show()
-'''
-
-
 def lineareRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = get_links(article,"linkshere")
+    backlinksMainview = get_back_links(article)
     df = pd.DataFrame()
     df2 = pd.DataFrame()
     len1 = len(mainviews)
@@ -138,31 +124,37 @@ def lineareRegression(article):
     # relativer fehler
     differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
     plt.plot(x1, differenceViews)
-    plt.xlabel("Difference Meisen to all Backlinks")
+    plt.xlabel("Difference " + article + " to all Backlinks")
     plt.ylabel("Average Error")
-    print("Kommutativen relativ fehler", np.mean(differenceViews))
     plt.show()
 
     plt.plot(x1, yhat)
-    print("AAAAAAAAAAAAAAAAAAAAAA", len(yhat))
-    print("BBBBBBBBBBBBBBBBB", len(mainviews))
     plt.xlabel("Time")
     plt.ylabel("Views")
-    plt.title("Meisen Regression YHAT")
+    plt.title(article + " Lineare Regression")
     plt.show()
 
     plt.boxplot(differenceViews)
+    plt.title("Lin Regression")
     plt.ylabel("Average Error")
-    plt.xlabel("Meisen")
+    plt.xlabel(article)
     plt.show()
+
+    print("SMAPE Lin Regression: ", smape(mainviews, yhat))
 
     return intercept, slope, r_sq
 
+
+if __name__ == '__main__':
+    lineareRegression("Meisen")
+
+
 def multLinRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = get_links(article,"linkshere")
+    backlinksMainview = get_back_links(article)
     first20entrys = backlinksMainview
     df = pd.DataFrame()
+    df2 = pd.DataFrame()
     len1 = len(mainviews)
 
     for entry in first20entrys:
@@ -174,6 +166,97 @@ def multLinRegression(article):
                 views.append(0)
 
         df.insert(loc=0, column=entry, value=views)
+
+    data = get_pageviews(article, project="de.wikipedia.org")
+    data2 = analysis(data)
+
+    x = df
+    y = mainviews
+
+    model = LogisticRegression()
+    model.fit(x, y, 0.2)
+
+    x2 = np.linspace(2015, 2022.5, num=len(mainviews))
+
+    intercept = model.intercept_
+    slope = model.coef_
+    r_sq = model.score(x, y)
+
+    print("intercept:", intercept)
+    print("slope:", slope)
+    print("coefficient of determination:", r_sq)
+
+    yhat = model.predict(x)
+    yhat[yhat < 0] = 0
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                        test_size=0.3,
+                                                        random_state=None)
+
+    plt.scatter(mainviews, yhat, alpha=0.7)
+    plt.title("Logarithmisch Lineare Regression")
+    plt.xlabel("Views Backlinks")
+    plt.ylabel("Views: " + article)
+    ax = plt.gca()
+    line = mlines.Line2D([0, 1], [0, 1], color="red")
+    transform = ax.transAxes
+    line.set_transform(transform)
+    ax.add_line(line)
+    plt.show()
+
+    x1 = np.linspace(2015, 2022.5, num=len(yhat))
+
+    plt.plot(x1, yhat)
+    plt.xlabel("Time")
+    plt.ylabel("Views")
+    plt.title(article + " Logarithmisch Lineare Regression")
+    plt.show()
+
+    # relativer fehler
+    differenceViews = [abs(m - km) / m for m, km in zip(mainviews, yhat)]
+    plt.plot(x1, differenceViews)
+    plt.xlabel("Difference " + article + " to all Backlinks")
+    plt.ylabel("Average Error")
+    plt.show()
+
+    plt.boxplot(smape(mainviews, yhat))
+    plt.title("Log Regression")
+    plt.title("Log Regression")
+    plt.ylabel("Average Error")
+    plt.xlabel(article)
+    plt.show()
+
+    print("SMAPE Log-Lin Regression: ", smape(mainviews, yhat))
+
+
+def exponentielleRegression(article):
+    mainviews = pageviewget(article)
+    backlinksMainview = get_back_links(article)
+    first20 = backlinksMainview[0:20]
+    df = pd.DataFrame()
+    df2 = pd.DataFrame()
+    len1 = len(mainviews)
+    print(len(mainviews))
+
+    for entry in backlinksMainview:  # for every backlink from the mainpage
+        views = pageviewget(entry)  # get the views
+        len2 = len(views)
+        print(len(views))
+        insert = []
+
+        if len2 < len1:  # then compare if they have the same amount of entries
+            diff = len1 - len2
+            print(diff)
+            for i in range(0, diff):
+                views.append(0)
+
+        for e in views:
+            if e != 0:
+                insert.append(np.log(e))
+            if e == 0:
+                insert.append(0)
+
+        df.insert(loc=0, column=entry, value=insert)
 
     data = get_pageviews(article, project="de.wikipedia.org")
     data2 = analysis(data)
@@ -273,9 +356,6 @@ def MAPE(target, predicted):
     def mape(actual, pred):
         actual, pred = np.array(actual), np.array(pred)
         return (np.abs((actual - pred) / actual)) * 100
-
-if __name__ == '__main__':
-    lineareRegression("Fußball")
 
 
 '''
