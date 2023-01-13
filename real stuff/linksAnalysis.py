@@ -27,5 +27,4 @@ if __name__ == '__main__':
     df = df.set_index('links to')
     df.to_csv('Meisennnnnnnnnnnnnnnnnnnnnnnn.csv', index=True)
     print("MEISEN HIER BACKLINS", get_back_links("Meisen"))
-
     print(df)

@@ -8,13 +8,13 @@ from matplotlib import lines as mlines
 from pandas.core import frame
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
-from linkmethods import get_pageviews, get_back_links
+from linkmethods import get_pageviews, get_links
 from testplots import analysis
 
 
 def analyse(mainpage):
     mainviews = pageviewget(mainpage)
-    backlinksMainview = get_back_links(mainpage)
+    backlinksMainview = get_links(mainpage,"linkshere")
     summe = []
 
     for entry in mainviews:
@@ -38,11 +38,10 @@ def pageviewget(article):
 
     try:
         data = get_pageviews(article, project="de.wikipedia.org")
+        for entry in data:
+            views.append((entry['views']))
     except:
         pass
-
-    for entry in data:
-        views.append((entry['views']))
 
     return views
 
@@ -72,7 +71,7 @@ plt.show()
 
 def lineareRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = get_back_links(article)
+    backlinksMainview = get_links(article,"linkshere")
     df = pd.DataFrame()
     df2 = pd.DataFrame()
     len1 = len(mainviews)
@@ -159,14 +158,9 @@ def lineareRegression(article):
 
     return intercept, slope, r_sq
 
-
-if __name__ == '__main__':
-    lineareRegression("Meisen")
-
-
 def multLinRegression(article):
     mainviews = pageviewget(article)
-    backlinksMainview = get_back_links(article)
+    backlinksMainview = get_links(article,"linkshere")
     first20entrys = backlinksMainview
     df = pd.DataFrame()
     len1 = len(mainviews)
@@ -279,6 +273,9 @@ def MAPE(target, predicted):
     def mape(actual, pred):
         actual, pred = np.array(actual), np.array(pred)
         return (np.abs((actual - pred) / actual)) * 100
+
+if __name__ == '__main__':
+    lineareRegression("Fußball")
 
 
 '''

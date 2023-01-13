@@ -1,4 +1,5 @@
 import glob
+import sys
 
 import pandas as pd
 import psutil
@@ -16,8 +17,8 @@ HEADERS = {"Accept": "application/json", "user-agent": "marvin.braun1@smail.inf.
 
 
 def get_pageviews(article: str,
-                  start = datetime(2015, 7, 1),
-                  end = datetime(2022, 7, 1),
+                  start=datetime(2015, 7, 1),
+                  end=datetime(2022, 7, 1),
                   project="de.wikipedia.org", access="all-access", agent="all-agents", granularity="daily"):
     """
         args:
@@ -91,11 +92,12 @@ def get_back_links(article: str):
     PARAMS = {
         "action": "query",
         "bltitle": article,
+        "plcontinue": True,
         "bllimit": "max",
         "format": "json",
         "list": "backlinks",
     }
-
+    data = get_pageviews(article)
     R = S.get(url=URL, params=PARAMS)
     DATA = R.json()
     BACKLINKS = DATA["query"]["backlinks"]
@@ -118,13 +120,19 @@ def count_links(article: str):
         links.append("%s: %d" % (item[0], item[1]))
     return links
 
-def get_target(target:str):
+
+def get_target(target: str):
+    try:
+        write_backlinks_tocsv(target)
+    except:
+        pass
     path = r'c:\Users\Marvin\PycharmProjects\pythonProject/real stuff/datafiles/' + target + '/' + target + '.csv'
     data = pd.read_csv(path)
-    df_meisen = pd.DataFrame(data)[["timestamp","views"]]
-    df_meisen["timestamp"] = pd.to_numeric(df_meisen["timestamp"])
-    df_meisen = df_meisen.set_index("timestamp")
-    return df_meisen
+    df = pd.DataFrame(data)[["timestamp", "views"]]
+    df["timestamp"] = pd.to_numeric(df["timestamp"])
+    df = df.set_index("timestamp")
+    return df
+
 
 def get_backlink_views(target, ref_df):
     path = r'c:\Users\Marvin\PycharmProjects\pythonProject/real stuff/datafiles/' + target + '/backlinksdata'
@@ -133,11 +141,91 @@ def get_backlink_views(target, ref_df):
 
     for f in csv_files:
         df = pd.read_csv(f)
-        df = df[["timestamp","views"]].set_index("timestamp").reindex_like(ref_df).fillna(0)
+        df = df[["timestamp", "views"]].set_index("timestamp").reindex_like(ref_df).fillna(0)
+        print(df)
 
         views = df.views.to_numpy()
         flatten_views.append(views)
     return flatten_views
+
+
+def get_backlink_strings(article):
+    path = r'c:\Users\Marvin\PycharmProjects\pythonProject/real stuff/datafiles/' + article + '/backlinksdata'  # make path a global variable
+    extension = 'csv'
+    os.chdir(path)
+    result = glob.glob('*.{}'.format(extension))
+    cropped_result = [r[0:-4] for r in result]
+    return cropped_result
+def get_links(article: str, prop: str):
+
+    "props = links or linkshere"
+
+    if prop == "links":
+        limit = "pllimit=max"
+        con = "plcontinue="
+    else:
+        limit = "lhlimit=max"
+        con = "lhcontinue="
+
+    titles = []
+    data = requests.get(f"https://de.wikipedia.org/w/api.php?action=query&format=json&titles={article}&prop={prop}&{limit}").json()
+    data_continue = data
+
+    data = to_links(data, prop)
+    for i in data:
+        titles.append(i["title"])
+
+    while list(data_continue.keys())[0] == "continue":
+        data_continue = data_continue["continue"]
+        data_continue = data_continue[con[0:len(con)-1]]
+        data_continue = requests.get(f"https://de.wikipedia.org/w/api.php?action=query&format=json&titles={article}&prop={prop}&{limit}&{con}{data_continue}").json()
+        data_list = to_links(data_continue, prop)
+        for i in data_list:
+            titles.append(i["title"])
+
+    return titles
+
+def to_links(data: dict, prop: str):
+    data = data["query"]
+    data = data["pages"]
+    data = data[list(data.keys())[0]]
+    return data[f"{prop}"]
+
+
+def write_backlinks_tocsv(target: str):
+    if not isinstance(target, str):
+        raise TypeError('Target has to be a string')
+    else:
+        data = get_links(target,"linkshere")
+        new = [k for k in data if not 'Benutzer' in k]
+        new1 = [k for k in new if not 'Diskussion' in k]
+        new2 = [k for k in new1 if not 'Wikipedia' in k]
+        new3 = [k for k in new2 if not '/' in k]
+        pathindir = "datafiles/" + target
+        pathofblinkdata = "datafiles/" + target + "/backlinksdata"
+        os.mkdir(pathindir)
+        os.mkdir(pathofblinkdata)
+        maindf = pd.DataFrame(get_pageviews(target))
+        maindf.to_csv(pathindir+ '/' + target + '.csv', index=False)
+        for entry in new3:
+            df = pd.DataFrame(get_pageviews(entry))
+            if len(df) < (len(maindf)/2):
+                pass
+            else:
+                df.to_csv(pathofblinkdata + '/' f'{entry}' + '.csv', index=False)
+
+
+def filterbacklinks(listtofilter: list):
+    if not isinstance(listtofilter, list):
+        raise TypeError('Target has to be a list containing all Backlinks from one page')
+    else:
+        new = [k for k in listtofilter if not 'Benutzer' in k]
+        new1 = [k for k in new if not 'Diskussion' in k]
+        new2 = [k for k in new1 if not 'Wikipedia' in k]
+        new3 = [k for k in new2 if not '/' in k]
+        return new3
+
+
 
 ############################################################################################################
 if __name__ == '__main__':
@@ -147,36 +235,21 @@ if __name__ == '__main__':
     year = []
 
     # get data from one article
-    data = get_pageviews("Meisen", project="de.wikipedia.org")
+    data = get_pageviews("Meisen")
 
     # Get the timestamp of the first set of Data
-    firstyear = [int(data[0]["timestamp"][0:4])]
+
     for entry in data:
-        article = entry['article']
-        timestamp.append((entry['timestamp']))
         views.append((entry['views']))
 
-    x = np.linspace(firstyear, 2022, num=len(views))
+    x = np.linspace(2015.5, 2022.5, num=len(views))
     plt.plot(x, views)
     plt.xlabel("Time")
     plt.ylabel("Views")
-    plt.title(article)
+    plt.title("Meisen")
     plt.show()
 
-    dataM = get_forward_links("Meisen")
-    dataB = get_back_links("Meisen")
-    print("joo bin da")
-    print(len(dataB))
-    new2 = [k for k in dataB if not 'Benutzer' in k]
-    new3 = [k for k in new2 if not 'Diskussion' in k]
-    new4 = [k for k in new3 if not 'Wikipedia' in k]
-    new5 = [k for k in new4 if not '/' in k]
-
-    path = "datafiles/Meisen/backlinksdata"
-    print(path)
-    path2 = "datafiles/Meisen"
-    maindf = pd.DataFrame(get_pageviews("Meisen"))
-    maindf.to_csv(path2 + '/' "Meisen" + '.csv',index=False)
+    write_backlinks_tocsv("Wald-_und_Baumgrenze")
 
     '''
     #Getting all the Filtered Backlinks and then Writing them to an CSV for easier access
@@ -200,6 +273,7 @@ if __name__ == '__main__':
     print("after", len(filterdf))
     print(len(filterdf)-len(filterdf2))
     '''
+    sys.exit()
 
 # Can remove unusefull links via:
 # dataB.remove("Magdeburger Straßen/M")
