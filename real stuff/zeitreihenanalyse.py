@@ -139,7 +139,7 @@ def lineareRegression(article):
     plt.xlabel(article)
     plt.show()
 
-    print("SMAPE Lin Regression: ", differenceViews.means())
+    print("SMAPE Lin Regression: ", differenceViews.mean())
 
     return intercept, slope, r_sq
 
@@ -342,7 +342,7 @@ def MAPE(target, predicted):
 
 
 if __name__ == '__main__':
-    article = "Schmetterlinge"
+    article = "Vögel"
     lineareRegression(article)
     logisticRegression(article)
 
