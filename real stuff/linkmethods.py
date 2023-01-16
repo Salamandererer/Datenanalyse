@@ -175,8 +175,8 @@ def write_backlinks_tocsv(target: str):
             os.mkdir(pathindir)
             os.mkdir(pathofblinkdata)
         except:
-            print("Directory already exists, or the path is wrong")
-            pass
+            print("Directory already exists, reading in the file")
+            return
         maindf = pd.DataFrame(get_pageviews(target))
         maindf.to_csv(pathindir + '/' + target + '.csv', index=False)
         for entry in new4:
