@@ -1,4 +1,4 @@
-cproject,article,granularity,timestamp,access,agent,views
+project,article,granularity,timestamp,access,agent,views
 de.wikipedia,Appetenzverhalten,daily,2015070100,all-access,all-agents,31
 de.wikipedia,Appetenzverhalten,daily,2015070200,all-access,all-agents,38
 de.wikipedia,Appetenzverhalten,daily,2015070300,all-access,all-agents,39
