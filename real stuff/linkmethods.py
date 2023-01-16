@@ -53,6 +53,9 @@ def get_pageviews(article: str,
 
 
 def get_views(article: str):
+    """
+        gibt die Views als Zeitstrahl von einem eingegebenen Artikel zurück
+    """
     try:
         data = get_pageviews(article)
         views = []
@@ -64,6 +67,10 @@ def get_views(article: str):
 
 
 def count_links(article: str):
+    """
+        Zählt die Anzahl der Links einer Seite mittels BeautifulSoup
+    """
+
     soup = BeautifulSoup(requests.get(f"https://de.wikipedia.org/wiki/{article}").text, "html.parser")
     foundUrls = Counter(
         [link["href"] for link in soup.find_all("a", href=lambda href: href and not href.startswith("#"))])
@@ -76,6 +83,10 @@ def count_links(article: str):
 
 
 def get_target(target: str):
+    """
+        Gibt das Dataframe von einem eingegeben Artikel zurück
+    """
+
     try:
         write_backlinks_tocsv(target)
     except:
@@ -89,6 +100,10 @@ def get_target(target: str):
 
 
 def get_backlink_views(target, ref_df):
+    """
+        Gibt die Views der Backlinks von einem eingegeben Target zurück
+    """
+
     path = r'datafiles/' + target + '/backlinksdata'
     csv_files = glob.glob(os.path.join(path, "*.csv"))
     flatten_views = []
@@ -104,6 +119,9 @@ def get_backlink_views(target, ref_df):
 
 
 def get_backlink_strings(article):
+    """
+
+    """
     path = r'datafiles/' + article + '/backlinksdata'  # make path a global variable
     extension = 'csv'
     os.chdir(path)
@@ -113,11 +131,13 @@ def get_backlink_strings(article):
 
 
 def get_links(article: str, prop: str):
-    '''
+    """
     props:
     linkshere = Backlinks
     links = forwardlinks
-    '''
+
+    gibt die Forward oder Backwardlinks eines eingegebenen Artikels zurück
+    """
 
     if prop == "links":
         limit = "pllimit=max"
@@ -188,6 +208,10 @@ def write_backlinks_tocsv(target: str):
 
 
 def filterlinks(listtofilter: list):
+    """
+        Filtert Links aus einer Liste von Backlinks heraus, die sonst die Predicition stören würden.
+        Darunter zählen bspw. Benutzer.
+    """
     if not isinstance(listtofilter, list):
         raise TypeError('Target has to be a list containing all Backlinks from one page')
     else:
@@ -200,13 +224,16 @@ def filterlinks(listtofilter: list):
 
 
 def plottimeseries(article: str):
+    """
+        Plottet die Views der Zeitreihe für einen eingegeben Artikel.
+    """
     # get data from one article
     data = get_pageviews(article)
     views = []
     for entry in data:
         views.append((entry['views']))
     # Plotting the Timeseries
-    x = np.linspace(2015.5, 2022.5, num=len(views))
+    x = np.linspace(2015, 2022.5, num=len(views))
     plt.plot(x, views)
     plt.xlabel("Time")
     plt.ylabel("Views")
@@ -219,4 +246,9 @@ if __name__ == '__main__':
     plottimeseries("Meisen")
     plottimeseries("Kurvendiskussion")
     plottimeseries("Lyrik")
+    plottimeseries("Programmiersprache")
+    print(len(get_links("Programmiersprache", "linkshere")))
+    print(len(get_links("Vögel", "linkshere")))
+    print(len(get_links("Korrelation", "linkshere")))
+
     sys.exit()
