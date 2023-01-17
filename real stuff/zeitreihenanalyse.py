@@ -172,6 +172,6 @@ def smape(target, forecast):
 
 
 if __name__ == '__main__':
-    article = "Bundesrat_(Deutschland)"
+    article = "Programmiersprache"
     lineareRegression(article)
     logisticRegression(article)

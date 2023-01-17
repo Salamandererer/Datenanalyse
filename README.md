@@ -29,3 +29,18 @@ um die Backlinks oder Forward Links einer bestimmten Seite zu kriegen.
 Zudem gibt es Methoden um eine Zeitreihe mit views einer Seite 
 anzufordern. 
 
+
+# Contribution: 
+
+Linksmethods: Andrea & Marvin 
+
+Correlation: Andrea 
+
+Regressionsanalyse:
+- Lineare Regression: Andrea 
+- Logistic Regression: Marvin 
+
+Graph: Marvin 
+
+Tensorflow Analysis: Marvin
+
