@@ -189,17 +189,22 @@ def write_backlinks_tocsv(target: str):
         new2 = [k for k in new1 if not 'Wikipedia' in k]
         new3 = [k for k in new2 if not '/' in k]
         new4 = [k for k in new3 if not 'Kategorie' in k]
+        new5 = [k for k in new4 if not target]
         pathindir = "datafiles/" + target
         pathofblinkdata = "datafiles/" + target + "/backlinksdata"
         try:
             os.mkdir(pathindir)
+        except:
+            print("Directory already exists")
+            pass
+        try:
             os.mkdir(pathofblinkdata)
         except:
-            print("Directory already exists, reading in the file")
+            print("reading in the file")
             return
         maindf = pd.DataFrame(get_pageviews(target))
         maindf.to_csv(pathindir + '/' + target + '.csv', index=False)
-        for entry in new4:
+        for entry in new5:
             df = pd.DataFrame(get_pageviews(entry))
             if len(df) < (len(maindf) / 2):
                 pass
