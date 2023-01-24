@@ -114,6 +114,7 @@ def smape(target, forecast):
 
 
 if __name__ == '__main__':
+    # in this file we added the cutoff for the lists to have the same data we use in the Neural network
     article = "Depression"
     print("Working on...", article)
     lineareRegression(article)
