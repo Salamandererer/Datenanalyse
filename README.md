@@ -34,11 +34,11 @@ anzufordern.
 
 Linksmethods: Andrea & Marvin 
 
-Correlation: Andrea 
+Correlation: Andrea & Marvin 
 
 Regressionsanalyse:
 - Lineare Regression: Andrea 
-- Logistic Regression: Marvin 
+- Logistic Regression: Andrea 
 
 Graph: Marvin 
 
